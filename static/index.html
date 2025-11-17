@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Blazer AI Chatbot</title>
+    <!-- Tailwind CSS CDN for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Base styles for html and body */
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden; /* Prevent body scroll */
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5; /* Background color for the page */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-sizing: border-box; /* Include padding and border in the element's total width and height */
+        }
+
+        /* Main chat container matching UI screenshot */
+        .chat-container {
+            width: 100%;
+            max-width: 400px; /* Adjusted max-width to match screenshot more closely */
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            /* Adjust height for mobile - slightly less than 100vh to account for browser UI */
+            height: calc(100vh - 40px); /* 40px for top/bottom padding of body */
+            margin: 20px; /* Add margin around the container to simulate body padding */
+        }
+
+        /* Header matching UI screenshot */
+        .chat-header {
+            background-color: #ffffff; /* White background */
+            color: #334155; /* Dark text */
+            padding: 12px 20px;
+            text-align: center;
+            font-size: 1rem; /* Smaller text */
+            font-weight: 500;
+            border-bottom: 1px solid #e2e8f0; /* Subtle border */
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top-left-radius: 12px;
+            border-top-right-radius: 12px;
+        }
+        .chat-header .title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .chat-header .title i {
+            font-size: 1.2rem;
+            color: #4f46e5; /* Purple for the logo icon */
+        }
+        .chat-header .actions { /* Corrected class selector */
+            display: flex;
+            gap: 16px; /* Increased gap for buttons */
+            align-items: center;
+        }
+        .chat-header .actions i {
+            font-size: 1.2rem;
+            color: #64748b;
+            cursor: pointer;
+        }
+        .chat-header .actions i:hover {
+            color: #334155;
+        }
+
+        /* Bot Info Section */
+        .bot-info {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 0;
+            border-bottom: 1px solid #e2e8f0;
+            background-color: #f8fafc; /* Light background for this section */
+        }
+        .bot-info .logo-circle {
+            background-color: #f0f2f5; /* Light grey circle */
+            border-radius: 50%;
+            width: 80px;
+            height: 80px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .bot-info .logo-circle i {
+            font-size: 3rem; /* Large icon for logo */
+            color: #4f46e5; /* Purple */
+        }
+        .bot-info h2 {
+            font-size: 1.5rem; /* text-2xl */
+            font-weight: 600;
+            color: #1a202c; /* Dark text */
+            margin-bottom: 5px;
+        }
+        .bot-info p {
+            font-size: 0.9rem; /* text-sm */
+            color: #64748b;
+            text-align: center;
+            max-width: 80%;
+        }
+
+        /* Chat Messages area */
+        .chat-messages {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            scroll-behavior: smooth;
+        }
+
+        /* Message bubbles */
+        .message-bubble {
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 8px; /* Slightly less rounded than previous */
+            word-wrap: break-word;
+            font-size: 0.95rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); /* Subtle shadow for bubbles */
+        }
+        .user-message {
+            background-color: #1a202c; /* Darker background for user message */
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px; /* Matches UI */
+        }
+        .ai-message {
+            background-color: #f0f2f5; /* Lighter background for AI message */
+            color: #334155;
+            align-self: flex-start;
+            border-bottom-left-radius: 4px; /* Matches UI */
+        }
+
+        /* Date Separator (Currently not used but kept in CSS if needed later) */
+        .date-separator {
+            text-align: center;
+            margin: 15px 0;
+            font-size: 0.8rem;
+            color: #94a3b8;
+            position: relative;
+        }
+        .date-separator::before,
+        .date-separator::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: 35%; /* Adjust width of lines */
+            height: 1px;
+            background-color: #cbd5e1;
+        }
+        .date-separator::before { left: 0; }
+        .date-separator::after { right: 0; }
+
+        /* Input area */
+        .chat-input-area {
+            display: flex;
+            padding: 15px 20px;
+            border-top: 1px solid #e2e8f0;
+            background-color: #ffffff;
+            align-items: center;
+        }
+        .chat-input {
+            flex-grow: 1;
+            padding: 10px 15px;
+            border: 1px solid #cbd5e1;
+            border-radius: 25px;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s;
+            touch-action: manipulation;
+        }
+        .chat-input:focus {
+            border-color: #4f46e5;
+        }
+        .send-button {
+            background-color: #4f46e5; /* Purple send button */
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 25px;
+            margin-left: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+            font-size: 1rem;
+            font-weight: 500;
+            touch-action: manipulation;
+        }
+        .send-button:hover {
+            background-color: #4338ca;
+        }
+        .send-button:active {
+            transform: scale(0.98);
+        }
+        .send-button:disabled {
+            background-color: #a5b4fc;
+            cursor: not-allowed;
+        }
+
+        /* Loading indicator */
+        .loading-indicator {
+            display: flex;
+            align-self: flex-start;
+            padding: 12px 16px;
+            border-radius: 8px;
+            background-color: #f0f2f5;
+            color: #334155;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            margin-top: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 0.2; }
+            50% { opacity: 1; }
+        }
+        .loading-indicator span {
+            font-weight: bold;
+            animation: blink 1.4s infinite steps(1);
+        }
+        .loading-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .loading-indicator span:nth-child(3) { animation-delay: 0.4s; }
+
+        /* Assistant Footer */
+        .assistant-footer {
+            padding: 10px 20px;
+            text-align: center;
+            font-size: 0.75rem; /* text-xs */
+            color: #94a3b8;
+            border-top: 1px solid #f0f2f5;
+            background-color: #ffffff;
+            border-bottom-left-radius: 12px;
+            border-bottom-right-radius: 12px;
+        }
+        .assistant-footer span {
+            font-weight: 500;
+            color: #64748b;
+        }
+
+        /* Firebase Auth/Firestore specific styles */
+        .auth-container {
+            padding: 20px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            align-items: center;
+        }
+        .google-signin-button {
+            background-color: #4285F4; /* Google blue */
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border: none;
+            transition: background-color 0.3s ease;
+        }
+        .google-signin-button:hover {
+            background-color: #357ae8;
+        }
+        .google-signin-button i {
+            font-size: 1.2rem;
+        }
+        .user-profile-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+            color: #4f46e5;
+            /* No margin-bottom here, moved to chat-header .actions */
+        }
+        .user-profile-info img {
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            object-fit: cover;
+            border: 1px solid #e2e8f0;
+        }
+        .signout-button {
+            background-color: #ef4444; /* Red for sign out */
+            color: white;
+            padding: 8px 15px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            border: none;
+            transition: background-color 0.3s ease;
+        }
+        .signout-button:hover {
+            background-color: #dc2626;
+        }
+        .clear-chat-button {
+            background-color: #64748b; /* Grey for clear chat */
+            color: white;
+            padding: 8px 15px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            border: none;
+            transition: background-color 0.3s ease;
+            /* No margin-top here, handled by flex gap in chat-header .actions */
+        }
+        .clear-chat-button:hover {
+            background-color: #475569;
+        }
+        /* Voice input button */
+        .voice-input-button {
+            background-color: #8b5cf6; /* Purple for mic */
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 25px;
+            margin-left: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+            font-size: 1rem;
+            font-weight: 500;
+            touch-action: manipulation;
+            display: flex; /* Make it a flex container to center icon */
+            justify-content: center;
+            align-items: center;
+        }
+        .voice-input-button:hover {
+            background-color: #7c3aed;
+        }
+        .voice-input-button.recording {
+            background-color: #ef4444; /* Red when recording */
+            animation: pulse 1s infinite alternate; /* Pulsing effect */
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.05); }
+        }
+
+        /* Responsiveness for mobile screens */
+        @media (max-width: 640px) {
+            html, body {
+                padding: 0;
+                margin: 0;
+            }
+            .chat-container {
+                height: 100vh; /* Full height on mobile */
+                border-radius: 0; /* No rounded corners on mobile */
+                max-width: 100%;
+                margin: 0; /* No margin on mobile */
+            }
+            .chat-header, .chat-input-area, .bot-info, .assistant-footer, .auth-container {
+                padding-left: 15px;
+                padding-right: 15px;
+            }
+            .chat-messages {
+                padding: 15px;
+                gap: 8px;
+            }
+            .send-button, .voice-input-button {
+                padding: 10px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <!-- Chat Header -->
+        <div class="chat-header">
+            <div class="title">
+                <i class="fas fa-robot"></i> <!-- Simple robot icon for logo -->
+                <span>Blazer AI</span>
+            </div>
+            <div class="actions flex gap-4">
+                <!-- User profile info will be here -->
+                <div id="userProfile" class="hidden">
+                    <div class="user-profile-info">
+                        <img id="userPhoto" src="https://placehold.co/30x30/a5b4fc/white?text=User" alt="User Photo" class="rounded-full">
+                        <span id="userName"></span>
+                    </div>
+                </div>
+                <button id="clearChatButton" class="clear-chat-button hidden">Clear Chat</button>
+                <button id="signOutButton" class="signout-button hidden">Sign Out</button>
+            </div>
+        </div>
+
+        <!-- Authentication/Loading Section -->
+        <div id="authSection" class="auth-container">
+            <h2 class="text-2xl font-semibold text-gray-800">Welcome to Blazer AI!</h2>
+            <p class="text-gray-600 text-sm text-center">Sign in to save your chat history and unlock advanced features.</p>
+            <button id="googleSignInButton" class="google-signin-button">
+                <i class="fab fa-google"></i> Sign in with Google
+            </button>
+            <button id="anonymousSignInButton" class="text-indigo-600 hover:underline text-sm mt-2">Continue as Guest (No history saving)</button>
+        </div>
+
+        <!-- Bot Info Section (Visible after login or guest login) -->
+        <div id="botInfoSection" class="bot-info hidden">
+            <div class="logo-circle">
+                <i class="fas fa-burn"></i> <!-- Blazer AI logo: Fire icon -->
+            </div>
+            <h2>Hi I'm Blazer AI! &#128075;&#127996;</h2>
+            <p>Your intelligent assistant for all your questions and needs.</p>
+        </div>
+
+        <!-- Chat Messages Area -->
+        <div class="chat-messages hidden" id="chatMessages">
+            <!-- Initial AI message will be added by JS -->
+        </div>
+
+        <!-- Loading Indicator -->
+        <div class="loading-indicator" id="loadingIndicator">
+            <span>.</span><span>.</span><span>.</span>
+        </div>
+
+        <!-- Chat Input Area -->
+        <div class="chat-input-area hidden" id="chatInputArea">
+            <input type="text" id="chatInput" class="chat-input" placeholder="Message...">
+            <button id="voiceInputButton" class="voice-input-button flex-shrink-0">
+                <i class="fas fa-microphone"></i>
+            </button>
+            <button id="sendButton" class="send-button flex-shrink-0">Send</button>
+        </div>
+
+        <!-- Assistant Footer -->
+        <div class="assistant-footer">
+            Assistant &#9889; by <span>Blazer AI</span>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs (using latest stable versions) -->
+    <script type="module" src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
+    <script type="module" src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"></script>
+    <script type="module" src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
+
+    <script type="module">
+        // !!! YOUR Firebase Configuration (already inserted by me) !!!
+        const firebaseConfig = {
+          apiKey: "AIzaSyDFBP2uDP352BKYN82czeC9iex4KaPopVs",
+          authDomain: "blazeraidatabase.firebaseapp.com",
+          projectId: "blazeraidatabase",
+          storageBucket: "blazeraidatabase.firebasestorage.app",
+          messagingSenderId: "92601701806",
+          appId: "1:92601701806:web:1088174d195713add5643f",
+          measurementId: "G-26H3VH6KWY" // Analytics enabled, which is fine!
+        };
+
+        // Your Glitch Project Base URL (from previous steps)
+        // Uses the current server origin automatically
+const GLITCH_PROXY_BASE_URL = window.location.origin; 
+
+
+        // Firebase Imports and Initialization
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { getFirestore, collection, addDoc, getDocs, query, orderBy, limit, deleteDoc, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // DOM Elements
+        const chatMessages = document.getElementById('chatMessages');
+        const chatInput = document.getElementById('chatInput');
+        const sendButton = document.getElementById('sendButton');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const googleSignInButton = document.getElementById('googleSignInButton');
+        const anonymousSignInButton = document.getElementById('anonymousSignInButton');
+        const signOutButton = document.getElementById('signOutButton');
+        const clearChatButton = document.getElementById('clearChatButton');
+        const userProfile = document.getElementById('userProfile');
+        const userName = document.getElementById('userName');
+        const userPhoto = document.getElementById('userPhoto');
+        const authSection = document.getElementById('authSection');
+        const botInfoSection = document.getElementById('botInfoSection');
+        const chatInputArea = document.getElementById('chatInputArea');
+        const voiceInputButton = document.getElementById('voiceInputButton');
+
+        // State variables
+        let chatHistory = [];
+        let currentUser = null; // Firebase User object
+        let userId = null; // User ID for Firestore
+
+        // --- Firebase Firestore Paths ---
+        // Function to get user-specific chat collection path
+        function getUserChatCollectionRef(uid) {
+            // Firestore rules should be configured to allow:
+            // match /users/{userId}/{document=**} {
+            //   allow read, write: if request.auth != null && request.auth.uid == userId;
+            // }
+            return collection(db, `users/${uid}/chats`);
+        }
+
+        // --- UI Visibility ---
+        function setUIVisibility(isSignedIn) {
+            if (isSignedIn) {
+                authSection.classList.add('hidden');
+                botInfoSection.classList.remove('hidden');
+                chatMessages.classList.remove('hidden');
+                chatInputArea.classList.remove('hidden');
+                // clearChatButton and signOutButton visibility handled by auth state
+            } else {
+                authSection.classList.remove('hidden');
+                botInfoSection.classList.add('hidden');
+                chatMessages.classList.add('hidden');
+                chatInputArea.classList.add('hidden');
+            }
+        }
+
+        // --- Chat Display Functions ---
+        function scrollToBottom() {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function displayMessage(sender, text) {
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message-bubble');
+            if (sender === 'user') {
+                messageDiv.classList.add('user-message');
+            } else {
+                messageDiv.classList.add('ai-message');
+            }
+            messageDiv.innerHTML = text;
+            chatMessages.appendChild(messageDiv);
+            scrollToBottom();
+        }
+
+        function clearChatDisplay() {
+            chatMessages.innerHTML = '';
+        }
+
+        // --- Firebase Chat History Functions ---
+        async function loadChatHistory() {
+            clearChatDisplay(); // Clear existing display
+            chatHistory = [{ role: "model", parts: [{ text: "Welcome! How can I assist you today?" }] }];
+            displayMessage('AI', chatHistory[0].parts[0].text); // Display initial message
+
+            if (currentUser && userId && !currentUser.isAnonymous) { // Only load if a non-anonymous user is signed in
+                const chatCollectionRef = getUserChatCollectionRef(userId);
+                try {
+                    // Fetch documents, ordered by timestamp (asc for chronological)
+                    // IMPORTANT: Firestore orderBy needs an index if not on default field.
+                    // If you encounter "The query requires an index..." errors in console,
+                    // you'll need to create a composite index in Firebase Console:
+                    // Collection ID: chats, Fields: timestamp (Ascending)
+                    const q = query(chatCollectionRef, orderBy("timestamp", "asc"));
+                    const querySnapshot = await getDocs(q);
+
+                    querySnapshot.forEach((docSnap) => {
+                        const data = docSnap.data();
+                        if (data.role && data.parts && data.parts.length > 0 && data.parts[0].text) {
+                            const message = { role: data.role, parts: [{ text: data.parts[0].text }] };
+                            chatHistory.push(message);
+                            displayMessage(data.role === 'user' ? 'user' : 'AI', data.parts[0].text);
+                        }
+                    });
+                    scrollToBottom();
+                } catch (e) {
+                    console.error("Error loading chat history:", e);
+                    // Use a custom modal or message box instead of alert
+                    displayMessage('AI', 'Oops! Couldn\'t load your past chats. Please try again later.');
+                }
+            } else if (currentUser && currentUser.isAnonymous) {
+                // Initial message for anonymous users is already displayed above
+            }
+        }
+
+        async function saveMessage(sender, text) {
+            if (currentUser && userId && currentUser.isAnonymous === false) { // Only save for non-anonymous users
+                const chatCollectionRef = getUserChatCollectionRef(userId);
+                try {
+                    await addDoc(chatCollectionRef, { // addDoc from 'firebase/firestore'
+                        role: sender === 'user' ? 'user' : 'model',
+                        parts: [{ text: text }],
+                        timestamp: Date.now() // Using client-side timestamp. For strict ordering, use serverTimestamp()
+                    });
+                } catch (e) {
+                    console.error("Error saving message:", e);
+                    // Use a custom modal or message box instead of alert
+                    // alert("Failed to save chat message.");
+                }
+            }
+        }
+
+        async function clearUserChatHistory() {
+            if (currentUser && userId && currentUser.isAnonymous === false) {
+                // Use a custom confirmation modal instead of browser's confirm()
+                showCustomConfirmation("Are you sure you want to clear all your chat history? This cannot be undone.")
+                .then(async (confirmed) => {
+                    if (!confirmed) {
+                        return; // User cancelled
+                    }
+
+                    const chatCollectionRef = getUserChatCollectionRef(userId);
+                    try {
+                        // Firestore does not have a direct "delete all documents in collection" API client-side.
+                        // We need to fetch and delete them one by one in a transaction.
+                        const batchSize = 100; // Delete in batches
+                        let querySnapshot;
+                        do {
+                            querySnapshot = await getDocs(query(chatCollectionRef, limit(batchSize)));
+                            if (querySnapshot.empty) break; // No more documents to delete
+
+                            await runTransaction(db, async (transaction) => {
+                                querySnapshot.docs.forEach((docSnapshot) => {
+                                    transaction.delete(docSnapshot.ref);
+                                });
+                            });
+                            console.log(`Deleted a batch of ${querySnapshot.size} documents.`);
+                        } while (querySnapshot.size === batchSize); // Continue if a full batch was deleted
+
+                        clearChatDisplay();
+                        chatHistory = [{ role: "model", parts: [{ text: "Welcome! How can I assist you today?" }] }];
+                        displayMessage('AI', chatHistory[0].parts[0].text);
+                        scrollToBottom();
+                        showCustomAlert("Chat history cleared successfully!");
+                    } catch (e) {
+                        console.error("Error clearing chat history:", e);
+                        showCustomAlert("Failed to clear chat history. Please try again.");
+                    }
+                });
+            } else {
+                showCustomAlert("You must be signed in with a Google account to clear history.");
+            }
+        }
+
+        // --- Custom Alert/Confirmation (Replaces alert() and confirm()) ---
+        function showCustomAlert(message) {
+            // Placeholder for a custom modal. For now, using console.log.
+            // In a real app, you'd create a div that pops up with the message.
+            console.log("CUSTOM ALERT:", message); 
+            // Example:
+            // const alertDiv = document.createElement('div');
+            // alertDiv.textContent = message;
+            // alertDiv.style.cssText = "position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;padding:20px;border:1px solid gray;z-index:1000;";
+            // document.body.appendChild(alertDiv);
+            // setTimeout(() => alertDiv.remove(), 3000);
+        }
+
+        function showCustomConfirmation(message) {
+            // Placeholder for a custom confirmation modal.
+            // For now, using window.confirm. You MUST replace this with a proper UI modal.
+            return Promise.resolve(window.confirm(message));
+        }
+
+        // --- Main Chat Logic ---
+        async function sendMessage() {
+            const userMessage = chatInput.value.trim();
+            if (userMessage === '') return;
+
+            displayMessage('user', userMessage);
+            saveMessage('user', userMessage); // Save user message
+            chatInput.value = '';
+            sendButton.disabled = true;
+            chatInput.disabled = true;
+            voiceInputButton.disabled = true; // Disable voice input during send
+            loadingIndicator.style.opacity = 1;
+            scrollToBottom();
+
+            chatHistory.push({ role: "user", parts: [{ text: userMessage }] });
+
+            try {
+                const payload = {
+                    contents: chatHistory,
+                    generationConfig: {
+                        temperature: 0.7,
+                        topP: 0.9,
+                        topK: 40
+                    }
+                };
+
+                // Send the request to YOUR GLITCH NODE.JS BACKEND'S /chat endpoint
+                const response = await fetch(`${GLITCH_PROXY_BASE_URL}/chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) { // Check if the HTTP status is 200-299 from your proxy
+                    if (result.candidates && result.candidates.length > 0 &&
+                        result.candidates[0].content && result.candidates[0].content.parts &&
+                        result.candidates[0].content.parts.length > 0) {
+                        const aiResponse = result.candidates[0].content.parts[0].text;
+                        displayMessage('AI', aiResponse);
+                        saveMessage('model', aiResponse); // Save AI response
+                        chatHistory.push({ role: "model", parts: [{ text: aiResponse }] });
+                    } else {
+                        displayMessage('AI', 'Sorry, Blazer AI couldn\'t get a clear response. Please try again or rephrase.');
+                        console.error('Unexpected AI response structure from proxy:', result);
+                    }
+                } else {
+                    // Handle errors coming from your Glitch proxy (e.g., 500 if API key missing on backend)
+                    displayMessage('AI', `Omo, server wahala! Blazer AI's brain dey vex. Error: ${result.error || response.statusText}`);
+                    console.error('Error response from Glitch proxy:', result);
+                }
+
+            } catch (error) {
+                console.error("Error connecting to Glitch proxy or processing response:", error);
+                displayMessage('AI', 'Network wahala or something spoil! Cannot connect to Blazer AI\'s service. Please check your internet or try again later.');
+            } finally {
+                sendButton.disabled = false;
+                chatInput.disabled = false;
+                voiceInputButton.disabled = false; // Re-enable voice input
+                loadingIndicator.style.opacity = 0;
+                chatInput.focus();
+                scrollToBottom();
+            }
+        }
+
+        // --- Voice Input (Web Speech API) ---
+        let recognition = null;
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+        if (SpeechRecognition) {
+            recognition = new SpeechRecognition();
+            recognition.continuous = false; // Listen for a single phrase
+            recognition.interimResults = false;
+            recognition.lang = 'en-US'; // Or 'en-NG' for Nigerian English if supported
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                chatInput.value = transcript;
+                sendMessage(); // Automatically send after speech detected
+            };
+
+            recognition.onerror = (event) => {
+                console.error('Speech recognition error:', event.error);
+                voiceInputButton.classList.remove('recording');
+                voiceInputButton.innerHTML = '<i class="fas fa-microphone"></i>';
+                showCustomAlert('Voice input error: ' + event.error + '. Please check microphone permissions.');
+            };
+
+            recognition.onend = () => {
+                voiceInputButton.classList.remove('recording');
+                voiceInputButton.innerHTML = '<i class="fas fa-microphone"></i>';
+                chatInput.placeholder = "Message..."; // Reset placeholder
+            };
+        } else {
+            console.warn('Web Speech API not supported in this browser.');
+            voiceInputButton.style.display = 'none'; // Hide button if not supported
+        }
+
+        function toggleVoiceInput() {
+            if (voiceInputButton.classList.contains('recording')) {
+                recognition.stop();
+            } else {
+                try {
+                    recognition.start();
+                    voiceInputButton.classList.add('recording');
+                    voiceInputButton.innerHTML = '<i class="fas fa-stop-circle"></i>'; // Change icon to stop
+                    chatInput.placeholder = "Listening..."; // Give visual feedback
+                } catch (e) {
+                    console.error("Error starting speech recognition:", e);
+                    showCustomAlert("Could not start voice input. Ensure microphone is allowed and try again.");
+                }
+            }
+        }
+
+
+        // --- Event Listeners ---
+        sendButton.addEventListener('click', sendMessage);
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+        googleSignInButton.addEventListener('click', async () => {
+            const provider = new GoogleAuthProvider();
+            try {
+                await signInWithPopup(auth, provider);
+            } catch (error) {
+                console.error("Google Sign-In Error:", error);
+                if (error.code === 'auth/popup-closed-by-user') {
+                    showCustomAlert('Sign-in cancelled. Please try again.');
+                } else {
+                    showCustomAlert('Sign-in failed: ' + error.message);
+                }
+            }
+        });
+        anonymousSignInButton.addEventListener('click', async () => {
+            try {
+                await signInAnonymously(auth);
+                // The onAuthStateChanged listener will handle the UI update and message
+            } catch (error) {
+                console.error("Anonymous Sign-In Error:", error);
+                showCustomAlert('Guest sign-in failed: ' + error.message);
+            }
+        });
+        signOutButton.addEventListener('click', async () => {
+            try {
+                await signOut(auth);
+                // The onAuthStateChanged listener will handle the UI update and message
+            } catch (error) {
+                console.error("Sign Out Error:", error);
+                showCustomAlert('Sign-out failed: ' + error.message);
+            }
+        });
+        clearChatButton.addEventListener('click', clearUserChatHistory);
+        if (recognition) { // Only attach if recognition is supported
+          voiceInputButton.addEventListener('click', toggleVoiceInput);
+        }
+
+
+        // --- Firebase Auth State Listener ---
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                // User is signed in.
+                currentUser = user;
+                userId = user.uid; // Set userId for Firestore operations
+
+                setUIVisibility(true); // Show chat UI
+                
+                // Update profile display
+                userProfile.classList.remove('hidden');
+                if (user.displayName) {
+                    userName.textContent = user.displayName;
+                } else if (user.isAnonymous) {
+                    userName.textContent = "Guest User";
+                } else {
+                    userName.textContent = user.email || "Blazer User";
+                }
+
+                if (user.photoURL) {
+                    userPhoto.src = user.photoURL;
+                } else if (user.isAnonymous) {
+                    userPhoto.src = "https://placehold.co/30x30/64748b/white?text=Guest"; // Generic guest avatar
+                } else {
+                    userPhoto.src = "https://placehold.co/30x30/a5b4fc/white?text=User"; // Generic user avatar
+                }
+
+                if (user.isAnonymous) {
+                    clearChatButton.classList.add('hidden'); // Hide clear history for guests
+                    signOutButton.classList.remove('hidden'); // Guests can still sign out
+                    console.log("Signed in as anonymous user. History saving disabled.");
+                    // For anonymous users, we still load the initial AI message
+                    chatHistory = [{ role: "model", parts: [{ text: "Welcome, Guest! Your chat history will not be saved." }] }];
+                    displayMessage('AI', chatHistory[0].parts[0].text);
+                    scrollToBottom();
+                } else {
+                    // For signed-in users, load history from Firestore
+                    console.log("User signed in:", user.displayName || user.email);
+                    await loadChatHistory(); 
+                    clearChatButton.classList.remove('hidden'); // Show clear history for signed-in users
+                    signOutButton.classList.remove('hidden'); // Signed-in users can sign out
+                }
+
+            } else {
+                // User is signed out or not signed in.
+                currentUser = null;
+                userId = null;
+                setUIVisibility(false); // Show sign-in UI
+                userProfile.classList.add('hidden'); // Hide profile info
+                clearChatButton.classList.add('hidden'); // Hide clear chat button
+                signOutButton.classList.add('hidden'); // Hide sign out button
+                clearChatDisplay(); // Clear chat display on sign out
+                chatHistory = []; // Reset chat history
+                console.log("User signed out.");
+            }
+        });
+    </script>
+</body>
+</html>
