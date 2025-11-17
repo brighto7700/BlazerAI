@@ -1,0 +1,2 @@
+# BlazerAI
+Blazer AI bot
